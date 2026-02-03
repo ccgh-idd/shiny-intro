@@ -32,11 +32,12 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 - Understand the basic structure of a Shiny App 
 - Customise the UI by adding new input
 - Understand the app server and reactivity
-- Add a new plot to an existing shiny app
+- Add a new output to an existing shiny app
 
 ## Libraries
 
 During this session we will be using some specific R packages, please make sure they are installed and loaded
+
 ```{r}
 #| eval: false
 #| echo: true
@@ -51,7 +52,7 @@ library(tidyverse)
 ### Project structure {#folder-structure}
 
 ::: {.setup}
-If not done already, download and unzip the course folder. Save the uncompressed folder to a location that is [**not connected to OneDrive**]{.hovertip bs-toggle='tooltip' bs-title="OneDrive doesn't play well with R as it will attempt to constantly synchronize certain project files in a way that can cause errors or memory problems"} and navigate into it. (If you are working on Rstudio, you can create a project at the root of this folder and navigate into it).
+If not done already, download and unzip the course folder. Save the uncompressed folder to a location that is [**not connected to OneDrive**]{.hovertip bs-toggle='tooltip' bs-title="OneDrive doesn't play well with R as it will attempt to constantly synchronize certain project files in a way that can cause errors or memory problems"} and navigate into it.
 
 ```{r}
 #| echo: false
@@ -750,7 +751,7 @@ And this is a clap, you are done ! Congrats on building and tweaking your first 
 #| eval: true
 
 downloadthis::download_link(
-  link = 'https://github.com/epicentre-msf/repicentre/blob/main/sessions_core/01_introduction_solutions.R',
+  link = 'https://github.com/ccgh-idd/shiny-intro/blob/372cf914ac5c4b3381a528a0f1acb12712f69098/app.R',
   button_label = 'Solution File',
   has_icon = TRUE,
   icon = "fa fa-save",
@@ -767,6 +768,7 @@ Shiny is a huge field within the R community and there are a lots of amazing res
 - The [Shiny website](https://shiny.posit.co/) - full of useful tips and their [Gallery](https://shiny.posit.co/r/gallery/) for demos and templates
 
 **R packages**
-- [epishiny](https://epicentre-msf.github.io/epishiny/) - provides simple functions that produce engaging, feature-rich interactive visualisations and dashboards from epidemiological data using R’s shiny web-framework. (developped by [Epicentre Data Science Team](https://epicentre-msf.github.io/gallery/))
-- [shinyWidgets](https://github.com/dreamRs/shinyWidgets) - gives you many many more widgets that can be used in your app.epishi
-- [highcharter](https://jkunst.com/highcharter/) - R wrapper for the Highcharts (javascript) library for interactive visualisations
+
+- [{epishiny}](https://epicentre-msf.github.io/epishiny/) - provides simple functions that produce engaging, feature-rich interactive visualisations and dashboards from epidemiological data using R’s shiny. (developped by [Epicentre Data Science Team](https://epicentre-msf.github.io/gallery/))
+- [{shinyWidgets}](https://github.com/dreamRs/shinyWidgets) - gives you many many more widgets that can be used in your app.epishi
+- [{highcharter}](https://jkunst.com/highcharter/) - R wrapper for the Highcharts (javascript) library for interactive visualisations
