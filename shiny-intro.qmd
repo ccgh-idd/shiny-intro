@@ -1,6 +1,6 @@
 ---
-title: Matching names with {nmatch}
-description: Learn an efficient algorithm for complex name matching using the package {nmatch}
+title: Intoduction to shiny dashboards
+description: Learn how to work and customise simple shiny apps
 date: last-modified
 format:
   html:
@@ -16,7 +16,7 @@ format:
 
 ```{r}
 #| include: false
-library(nmatch)
+library(shiny)
 library(janitor)
 library(tidyverse)
 ```
@@ -29,65 +29,55 @@ knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
 
 Objectives
 ----------------------------------------------------------------------------------------------------
-- Explore the nmatch package and the concept of fuzzy matching
-- Implement fuzzy name matching at scale
-- Design and apply tiered matching criteria
-- Validate and reconcile matches through manual review
+- Understand the structure of a Shiny App 
+- Customise the UI
+- Load data in the app
+- Develop an App Server
+- Understand Reactivity
 
 Ressources
 ----------------------------------------------------------------------------------------------------
-During this session we will be using some R packages developped by Epicentre [Data Science team](https://epicentre-msf.github.io/gallery/), so please make sure it is downloaded.
-
+During this session we will be using some specific R packages, please make sure they are installed and loaded
 ```{r}
 #| eval: false
 #| echo: true
-# install.packages("remotes")
-remotes::install_github("epicentre-msf/nmatch")
-remotes::install_github("epicentre-msf/qxl")
-
-library(nmatch)
-library(qxl)
-```
-
-You can also check other of our packages [here](https://epicentre-msf.r-universe.dev/packages) ! 
-
-Please also make sure that these packages are installed and loaded: 
-
-```{r}
-library(janitor) #data wrangling and cleaning
-library(tidyverse) #data wrangling and cleaning
+# install.packages("shiny")
+library(shiny)
+library(tidyverse)
 ```
 
 Data
 ----------------------------------------------------------------------------------------------------
 
-For this session we will be using data simulated from a measles outbreak in Southern Chad. These data are shared as a `.rds` file that contains a list: 
 
-| Dataset | Type | Description | Contents |
-|---------|------|-------------|-----------------------|
-| `msf_linelist` | Dataframe | Epidemiological linelist | • 5,230 probable cases of Measles<br>• Key epidemiological dates<br>• Demographic information |
-| `lab_data` | Dataframe | Laboratory database | • List of all laboratory test performed<br> |
 
-```{r}
-#| echo: false
-#| eval: true
-# msf_linelist <- episimdata::moissala_linelist_EN |> as_tibble()
-# lab_data <- episimdata::moissala_laboratory_clean_EN |>select(-id) |> as_tibble()
+For this session we will be using data simulated from a measles outbreak in Southern Chad. These data are shared as a `.rds` file that contains a line list of 5,230 probable and confirmed measles cases with Key epidemiological dates, clinical signs and demographic informations
 
-# data_ls <- list(
-#   "msf_linelist" = msf_linelist, 
-#   "lab_data" = lab_data
-# )
-
-# saveRDS(data_ls, here::here("data", "clean", "moissala_data.rds"))
+```{r, eval = TRUE}
 
 downloadthis::download_link(
-  "data/clean/moissala_data.rds",
-  button_label = 'Download the data',
+  link = 'https://github.com/ccgh-idd/shiny-intro/raw/shiny-app.zip',
+  button_label = 'Course Folder',
   has_icon = TRUE,
   icon = "fa fa-save",
   self_contained = FALSE
 )
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#msf_linelist <- episimdata::moissala_linelist_EN |> as_tibble()
+
+#saveRDS(msf_linelist, here::here("data", "clean", "moissala_data.rds"))
+
+# downloadthis::download_link(
+#   "data/clean/moissala_data.rds",
+#   button_label = 'Download the data',
+#   has_icon = TRUE,
+#   icon = "fa fa-save",
+#   self_contained = FALSE
+# )
 ```
 
 ::: {.setup}

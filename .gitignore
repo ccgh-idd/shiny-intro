@@ -1,0 +1,56 @@
+# Quarto rendered outputs
+*.html
+*_files/
+/.quarto/
+
+# R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# macOS
+raw/.DS_Store
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# RStudio temporary files
+.Rproj.user/
+rsconnect/
+
+# R package development
+*.tar.gz
+*.Rcheck/
+
+# knitr and R markdown
+*_cache/
+*_files/
+/*.html
+/*.pdf
+/*.docx
+
+# Shiny app deployment
+rsconnect/
+
+# Data files (if you don't want to commit large datasets)
+# Uncomment if needed:
+# *.csv
+# *.rds
+# *.xlsx
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
