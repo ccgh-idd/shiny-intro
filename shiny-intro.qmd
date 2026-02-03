@@ -4,6 +4,7 @@ description: Learn how to work and customise simple shiny apps
 date: last-modified
 format:
   html:
+    self-contained: true
     highlight-style: github
     css: styles.css
     toc: true
@@ -59,7 +60,7 @@ If not done already, download and unzip the course folder. Save the uncompressed
 #| eval: true
 
 downloadthis::download_link(
-  link = 'https://github.com/ccgh-idd/shiny-intro/data/shiny-app-init.zip',
+  link = 'https://github.com/ccgh-idd/shiny-intro/blob/26262d7af5a0b3cedf2203d5d9f7da9c7b8ee872/data/shiny-app-init.zip',
   button_label = ' Course Folder',
   has_icon = TRUE,
   icon = "fa fa-save",

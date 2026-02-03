@@ -9,7 +9,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       dateRangeInput(
-        inputID = "date_range",
+        inputId = "date_range",
         label = "Select Date Range:",
         start = min(linelist$date_onset, na.rm = TRUE),
         end = max(linelist$date_onset, na.rm = TRUE),
@@ -20,7 +20,7 @@ ui <- fluidPage(
 
     mainPanel(
       plotOutput(
-        outputID = "epicurve"
+        outputId = "epicurve"
       )
     )
   )
