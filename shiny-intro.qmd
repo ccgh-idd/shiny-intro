@@ -53,31 +53,16 @@ Data
 
 For this session we will be using data simulated from a measles outbreak in Southern Chad. These data are shared as a `.rds` file that contains a line list of 5,230 probable and confirmed measles cases with Key epidemiological dates, clinical signs and demographic informations
 
-```{r, eval = TRUE}
-
+```{r}
+#| echo: false
+#| eval: true
 downloadthis::download_link(
-  link = 'https://github.com/ccgh-idd/shiny-intro/raw/shiny-app.zip',
+  link = 'https://github.com/ccgh-idd/shiny-intro/raw/main/data/shiny-app.zip',
   button_label = 'Course Folder',
   has_icon = TRUE,
   icon = "fa fa-save",
   self_contained = FALSE
 )
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#msf_linelist <- episimdata::moissala_linelist_EN |> as_tibble()
-
-#saveRDS(msf_linelist, here::here("data", "clean", "moissala_data.rds"))
-
-# downloadthis::download_link(
-#   "data/clean/moissala_data.rds",
-#   button_label = 'Download the data',
-#   has_icon = TRUE,
-#   icon = "fa fa-save",
-#   self_contained = FALSE
-# )
 ```
 
 ::: {.setup}
