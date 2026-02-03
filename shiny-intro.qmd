@@ -1,0 +1,390 @@
+---
+title: Matching names with {nmatch}
+description: Learn an efficient algorithm for complex name matching using the package {nmatch}
+date: last-modified
+format:
+  html:
+    highlight-style: github
+    css: styles.css
+    toc: true
+    include-in-header:
+      text: <script type="text/javascript" src="../script.js"></script>
+    execute:
+      echo: true
+      eval: false
+---
+
+```{r}
+#| include: false
+library(nmatch)
+library(janitor)
+library(tidyverse)
+```
+
+```{r setup}
+#| include: false
+#| eval: true
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+```
+
+Objectives
+----------------------------------------------------------------------------------------------------
+- Explore the nmatch package and the concept of fuzzy matching
+- Implement fuzzy name matching at scale
+- Design and apply tiered matching criteria
+- Validate and reconcile matches through manual review
+
+Ressources
+----------------------------------------------------------------------------------------------------
+During this session we will be using some R packages developped by Epicentre [Data Science team](https://epicentre-msf.github.io/gallery/), so please make sure it is downloaded.
+
+```{r}
+#| eval: false
+#| echo: true
+# install.packages("remotes")
+remotes::install_github("epicentre-msf/nmatch")
+remotes::install_github("epicentre-msf/qxl")
+
+library(nmatch)
+library(qxl)
+```
+
+You can also check other of our packages [here](https://epicentre-msf.r-universe.dev/packages) ! 
+
+Please also make sure that these packages are installed and loaded: 
+
+```{r}
+library(janitor) #data wrangling and cleaning
+library(tidyverse) #data wrangling and cleaning
+```
+
+Data
+----------------------------------------------------------------------------------------------------
+
+For this session we will be using data simulated from a measles outbreak in Southern Chad. These data are shared as a `.rds` file that contains a list: 
+
+| Dataset | Type | Description | Contents |
+|---------|------|-------------|-----------------------|
+| `msf_linelist` | Dataframe | Epidemiological linelist | • 5,230 probable cases of Measles<br>• Key epidemiological dates<br>• Demographic information |
+| `lab_data` | Dataframe | Laboratory database | • List of all laboratory test performed<br> |
+
+```{r}
+#| echo: false
+#| eval: true
+# msf_linelist <- episimdata::moissala_linelist_EN |> as_tibble()
+# lab_data <- episimdata::moissala_laboratory_clean_EN |>select(-id) |> as_tibble()
+
+# data_ls <- list(
+#   "msf_linelist" = msf_linelist, 
+#   "lab_data" = lab_data
+# )
+
+# saveRDS(data_ls, here::here("data", "clean", "moissala_data.rds"))
+
+downloadthis::download_link(
+  "data/clean/moissala_data.rds",
+  button_label = 'Download the data',
+  has_icon = TRUE,
+  icon = "fa fa-save",
+  self_contained = FALSE
+)
+```
+
+::: {.setup}
+
+In order to organise our analysis, and make it as replicable as possible we will be using an `Rproject` called `names-matching` and organised as follow:
+
+- 📁 data 
+  - 📁 clean 
+  - 📁 raw 
+- 📁 R
+- 📁 outputs
+
+- Open a new R script called `names-matching.R` and load `{nmatch}` and other libraries you use for data handling.
+
+- import the linelist into a `ll` object.
+
+- import the lab data into a `lab` object.
+
+:::
+
+```{r}
+#| echo: false
+#| eval: true
+ll <- readRDS(here::here("data", "clean", "moissala_data.rds"))$msf_linelist
+lab <- readRDS(here::here("data", "clean", "moissala_data.rds"))$lab_data
+```
+
+Exploring the data
+----------------------------------------------------------------------------------------------------
+
+### Linelist
+
+Like all project data analysis projects, we want to start with a look at our data. Let's first focus on the linelist. 
+
+::: {.write}
+- What is the number of rows and columns ? 
+- What are the column names ?
+:::
+
+It seems that we have a fairly traditional linelist of measles cases. Each line represent a case detected in the Mandoul region in Southern Chad. There are some demographic information (Name, Age, Sex, geographical information), some temporal clinical information (dates of admission, hospitalisation, outcome), other clinical information regarding symptoms, malaria testing, and outcome as well as data on the vaccination and malnutrition status of our cases. 
+
+These information are commonly found in a linelist and may be exploited in further analyses. Now remains one important question, are these cases uniquely identified by a Identifier (aka an **ID**) ? 
+
+::: {.write}
+- Is there a variable that holds the Identifier ? If yes, how is it called ? 
+
+- Are all cases **uniquely** identified ? 
+
+- Do they all have an ID ? 
+
+- Can you understand what is the format of the ID ? 
+:::
+
+```{r}
+ll |> 
+  select(id, full_name) |> 
+  janitor::get_dupes(id)
+```
+
+So it seems the variable `id`, a simple number, holds the identifyig information for our cases and all our cases have one. However after a quick check we can quickly spot that some are duplicated. Now there are many ways to deal with duplicated ID, and they should be carefully considered, but in the best scenario, these are perfect duplicates across all variables, and we can keep only one of them.
+
+::: {.write}
+- How many duplicates are they ? 
+- Write a command that check if these are perfect duplicates
+
+Run the following line
+:::
+
+```{r}
+ll |> 
+  janitor::get_dupes(id)
+
+```
+
+Indeed they are ! that is a great news, we can simply remove them with a call to `distinct`:
+
+```{r}
+
+ll_unique <- ll |> 
+  dplyr::distinct(.keep_all = TRUE)
+
+```
+
+For the sake of the exercise, we consider the rest of this linelist relatively clean, and can move on to the laboratory data.
+
+### Laboratory data
+
+So here is a list of all the Measles RT-PCR tests that were performed by the Ministry of Health in the National Reference Laboratory of Chad in N'Djamena from 15th of August 2022 to the 25th November 2023. These were requested by MSF teams so that we can clearly classify the measles cases from the linelist that were confirmed in the laboratory. Let's have a look at the data:
+
+::: {.write}
+- Explore the laboratory data
+- What information are provided ? 
+- How many tests are there ? 
+:::
+
+Similarly, we are interested to see if those tests have a unique identifier, how is it formatted, and if there are duplicates.
+
+::: {.look}
+- Which variable holds the Identifying information ?
+- What is the format of the ID code ?
+- Using the same logic as above, can you spot duplicates ?
+:::
+
+```{r}
+#| echo: true
+lab |> 
+  janitor::get_dupes(lab_id)
+```
+
+It seems that the `lab_id` variable, composed of 3 letters and digits separated by a `-`, holds the identifying information for the laboratory tests. Luckily for us, there are no duplicates ! That is a very good start.
+
+### The Problem
+
+Now recall why we have asked for those data: **we want to identify the measles cases which have been confirmed in the laboratory**.
+
+ In other words, we want to see which cases from the _linelist_, have a tests in the _laboratory data_. In data science, that means bringing information (the `lab_result` variable), from one of the dataset (`lab_data`), into another dataset (`ll_unique`). This process is called **joining** and is very commonly done in data science and in epidemiology. If you are familiar with the concept, you know that in order to join dataset, you need a common **key variable** that can act as a unique identifier for the rows from the first dataset and the rows in the second. This is the role of the identifier (ID).
+
+::: {.look}
+- Looking at your two datasets `ll_unique` and `lab`, can you use their ID variable a key variable to join them ? Why not ? 
+- So do you think that a joining is feasible at this stage ?
+:::
+
+You are absolutely right ! This is not a great situation as there are no common identifier between those datasets and we cannot perform a simple join like we are used to. These situations, where there is no common identifier, or it is unreliable (because not standardised, or full of typos) are common headaches for an epidemiologist working with data from the field, coming from different sources. 
+
+So, shall we stop here and forever forget about having a laboratory result in our linelist, or is there another solution ? 
+
+::: {.look}
+- Are there variables shared between the two dataset ?
+- Do you think you could use them for joining ? 
+:::
+
+If you take a closer look, both datasets have Name (`full_name`), Sex (`sex`), Age (`age`) and Date of symptoms onset (`date_onset`) variables. Maybe we can use them to assign the right laboratory test to the linelist cases ?
+
+```{r}
+intersect(names(lab), names(ll_unique))
+```
+
+Alternative to ID
+----------------------------------------------------------------------------------------------------
+
+Indeed that is a smart idea ! We could use the case names (`full_name`) as a key variable to bring in laboratory data. 
+
+::: {.look}
+What do you think about that ? Do you see any drawbacks in using _names_ as identifiers ?
+:::
+
+If you are skeptical, it's normal ! Names are indeed not great **key variable** because recall that these need to be unique identifiers, and surely we can find cases we the same name.
+
+::: {.write}
+- How can you check if some cases have the same name ? Do this in the linelist and the laboratory data
+- Do they all have a name ?
+:::
+
+```{r}
+
+ll_unique |> 
+  janitor::get_dupes(full_name)
+
+ll_unique |> 
+  filter(is.na(full_name))
+
+```
+
+```{r}
+lab |> 
+  janitor::get_dupes(full_name)
+
+lab |> 
+  filter(is.na(full_name))
+```
+That is not looking great for us, there are many homonyms which means that different cases, have similar names !   
+
+So while all of our linelists case have a name, there are **MANY** duplicates. These are homonyms, people with the same name, and are very common ! 
+
+Our laboratory data do not seem to have duplicated names, but have a lot of tests without a name !
+
+
+- Fuzzy matching and {nmatch}
+
+
+{nmatch} Algorithm
+----------------------------------------------------------------------------------------------------
+
+### Subsection 1
+
+### Subsection 2
+
+ - 1. Create all combinations and run nmatch_fast 
+
+- 2. Filter the matching matrix based on descreasing match stricness 
+
+- 3. Save the file for manual editing 
+- Careful not to overwrite it !
+
+- filter to 'good' matches based on manual review
+- e.g. accept all match_type 1:4 unless you've manually marked as false
+- only accept match_type 5 if you've manually confirmed it's a good match
+
+- make sure no dupes remain between id and name (homonyms) - otherwise modify excel
+
+
+Done!
+----------------------------------------------------------------------------------------------------
+This last header let's students know that they are done with the main material for the day. It should also include a link to the solutions (hosted on github). For example:
+
+```{r}
+#| echo: false
+#| eval: true
+
+downloadthis::download_link(
+  link = 'https://github.com/epicentre-msf/repicentre/blob/main/sessions_core/01_introduction_solutions.R',
+  button_label = 'Solution File',
+  has_icon = TRUE,
+  icon = "fa fa-save",
+  self_contained = FALSE
+)
+```
+
+Make sure this link references the **main**.
+
+
+Going Further
+----------------------------------------------------------------------------------------------------
+After your main content is done you should have a section called called "Going Further" for students who finish the main content early. It should include:
+1. A mention of one or two satellite sessions that would be relevant extensions of the current material
+2. A section with "extra exercise questions" (these don't need to use the "action blocks" (see below) and can just be a number list as shown below.
+
+### Extra Exercises
+1. Do this.
+2. Then do that.
+
+<hr>
+<hr>
+<hr>
+
+
+### Callouts
+**IMPORTANT: please do _not_ use callouts not explicitly defined here; they have not been included in the css and therefore will not render well in the final document.** 
+
+
+::: {.callout-note}
+This is a callout using `{.callout-note}`
+:::
+
+::: {.callout-tip}
+Comment about a genral tip / trick or best practice.
+:::
+
+::: {.callout-important}
+Warning / comment on something really important.
+:::
+
+
+### Action Boxes
+These are used for things participants are expected to *actually do*, ie: exercises. They are split into three categories.
+
+::: {.setup}
+Description of something participants need to setup, primarily used at the beginning of a section but can also be used for tasks like setting up an `Rproject` file, folder structure, etc.
+:::
+
+::: {.look}
+Description of something participants should observe, investigate, etc.
+:::
+
+
+::: {.write}
+Description of a coding exercise that participants are expected to complete.
+:::
+
+
+
+### Tabsets
+::: {.panel-tabset .nav-pills}
+
+## One
+Content that will show under the first tab
+
+## Two
+Content that will show under the second tab
+
+## Three
+Content that will show under the third tab
+:::
+
+
+### Images
+You can insert images by referring to their relative path using markdown syntax or HTML. Note that the markdown syntax does not allow you to modify image size. In either case, make sure to add alt text for accessibility.
+
+Markdown style syntax:
+
+![example image alt text](../img/under_construction.svg)
+
+HTML style syntax (with specification of desired size):
+
+<img src='../img/under_construction.svg' alt='example image alt (html)' width='200'/>
+
+
+### Linking to Other Pages
+Easy, use relative paths within a standard href, ie: [link to home page](../index.html).
+
