@@ -43,7 +43,9 @@ During this session we will be using some specific R packages, please make sure 
 #| eval: false
 #| echo: true
 # install.packages("shiny")
+# install.packages("bslib")
 library(shiny)
+library(bslib)
 library(here)
 library(tidyverse)
 ```
@@ -98,26 +100,33 @@ As any other project, our app has some data stored internally in `data/clean` fo
 
 ### Anatomy of a Shiny App
 
-Every Shiny app has **three essential components**:
+Every Shiny app has **four essential components**:
 
 1. **User Interface (UI)**: defines the layout and appearance of your app
 2. **Server**: contains the logic that creates outputs and handles user interactions
-3. **App call**: launches the application
-
+3. **Reactivity**: through reactive expressions, this links the user (inputs) with the server logic and the visual outputs
+4. **App call**: launches the application
+ 
 In simple apps, these are all bundled into a single file `app.R`, but they are can be organised in a two-file structure with `server.R` and `ui.R` for more complex apps.
 
+![Key structure and components of a simple shiny app](../img/key-component-shiny-app.png)
+ 
 ::: {.look}
 Looking at `app.R`, can you identify these three components?
 
 - Where does the UI start and end?
 - Where does the server logic live?
+- Can you spot where reactivity may lie ?
 - What line of code actually runs the app?
 :::
 
 The basic structure looks like this:
 
 ```{r}
-ui <- fluidPage(
+library(shiny)
+library(bslib)
+
+ui <- page_fluid(
   # UI elements go here
 )
 
@@ -153,17 +162,29 @@ Now let's dig into it and customise it
 
 The User Interface (UI) is where we design the appearance and layout of the app, we will define which inputs can user interact with, choose where to put the outputs (plot, tables) of the analyses and organise everything on the screen. It is built using layout, input and ouput functions that nest inside each other.
 
+**Why `{bslib}`?**
+
+Modern Shiny apps use the `{bslib}` package for layouts instead of the older base Shiny functions. `{bslib}` provides:
+
+- Modern Bootstrap CSS: Uses the latest Bootstrap framework for better styling and responsive design
+- Theming capabilities: Easy customization of app appearance with custom themes
+- Better layouts: More intuitive and flexible layout functions
+- Recommended by Posit: The Shiny development team recommends `{bslib}` for all new apps
+
+While you may see older Shiny code using functions like `fluidPage()` and `sidebarLayout()`, we'll focus on the modern `{bslib}` equivalents throughout this tutorial.
+
 ### Layout Functions
 
-Layout functions control how your app is structured visually. The most common pattern is:
+Layout functions control how your app is structured visually. The most common `{bslib}` pattern is:
 
-- **`fluidPage()`**: Creates a responsive page that adjusts to different screen sizes
-- **`sidebarLayout()`**: Divides the page into two panels - a sidebar and a main panel
-  - **`sidebarPanel()`**: Typically contains input controls (filters, sliders, etc.)
-  - **`mainPanel()`**: Displays outputs (plots, tables, text)
-- **`titlePanel()`**: Adds a title at the top of the page
+- `page_sidebar()`: Creates a page with a built-in sidebar layout: 
+  - Takes a title argument for the app title
+  - Contains a `sidebar()` function that defines the sidebar panel (typically for input controls)
+  - Main content (outputs) goes directly in the page, no wrapper needed
+- `page_fluid()`: Creates a responsive page without a sidebar
+- `page_fillable()`: Creates a page that fills the browser height - great for full-screen dashboards
 
-Other useful layout functions include `fluidRow()` and `column()` for creating custom grid layouts, and `tabsetPanel()` for organizing content into tabs.
+Other useful layout functions include `layout_columns()` and `layout_column_wrap()` for creating custom grid layouts, and `navset_tab()` for organizing content into tabs.
 
 ### Input Functions
 
@@ -585,32 +606,30 @@ Ok in order to implement these new outputs, we need to deal with two things whic
 
 Before we start coding, let's understand how to organize multiple outputs using tabs. Tabsets allow you to place related visualizations in separate panels that users can switch between, keeping the interface clean and organized.
 
-In Shiny, you create tabs using:
+In `{bslib}`, you create tabs using:
 
-- **`tabsetPanel()`**: Creates the container for tabs
-- **`tabPanel()`**: Defines each individual tab with a title and content
+- `navset_tab()`: Creates the container for tabs
+- `nav_panel()`: Defines each individual tab with a title and content
 
 The basic structure looks like:
 
 ```{r}
-mainPanel(
-  tabsetPanel(
-    tabPanel("Tab 1 Title", 
-             plotOutput("plot1")),
-    tabPanel("Tab 2 Title", 
-             tableOutput("table1"))
-  )
+navset_tab(
+  nav_panel("Tab 1 Title", 
+            plotOutput("plot1")),
+  nav_panel("Tab 2 Title", 
+            tableOutput("table1"))
 )
 ```
 
-Each `tabPanel()` can contain multiple outputs (plots, tables, text) just like the main panel can.
+Each `nav_panel()` can contain multiple outputs (plots, tables, text).
 
 ::: {.write}
 **Step 1: Restructure the UI with tabsets**
 
-Modify your `mainPanel()` in the UI to use a tabset structure:
+Modify your `page_sidebar()` in the UI to use a tabset structure:
 
-1. Below the epicurve, add a new section with a `tabsetPanel()` for the Person Analysis
+1. Below the epicurve, add a new section with a `navset_tab()` for the Person Analysis
 2. Create two tabs for the **Person Analysis**:
    - First tab: "Age Pyramid" containing a placeholder for the age pyramid `plotOutput("age_pyramid")`
    - Second tab: "Summary Statistics" containing a placeholder for the table  `tableOutput("summary_table")`
@@ -621,21 +640,21 @@ Run your app to see the tabbed interface.
 - Do you see the two tabs for Person Analysis below it?
 :::
 
-Ok now your `mainPanel()` should look like:
+Ok now your `page_sidebar()` should look like:
 
 ```{r}
-mainPanel(
-  plotOutput("epicurve"),
-  
-  h3("Person Analysis"), 
-  
-  tabsetPanel(
-    tabPanel("Age Pyramid",
-             plotOutput("age_pyramid")),
-    tabPanel("Summary Statistics",
-             tableOutput("summary_table"))
-  )
+# Inside page_sidebar(), after the epicurve
+plotOutput("epicurve"),
+
+h3("Person Analysis"), 
+
+navset_tab(
+  nav_panel("Age Pyramid",
+            plotOutput("age_pyramid")),
+  nav_panel("Summary Statistics",
+            tableOutput("summary_table"))
 )
+
 ```
 
 Let's not complicate things further for now and not add anymore inputs - no that our UI is set up we can implement the server logic. 

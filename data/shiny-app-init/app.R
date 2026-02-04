@@ -1,28 +1,24 @@
 library(shiny)
+library(bslib)
 library(tidyverse)
 
 linelist <- readRDS(file.path("data", "clean", "moissala_data.rds"))
 
-ui <- fluidPage(
-  titlePanel("Moissala measles Outbreak"),
+ui <- page_sidebar(
+  title = "Moissala measles Outbreak",
 
-  sidebarLayout(
-    sidebarPanel(
-      dateRangeInput(
-        inputId = "date_range",
-        label = "Select Date Range:",
-        start = min(linelist$date_onset, na.rm = TRUE),
-        end = max(linelist$date_onset, na.rm = TRUE),
-        min = min(linelist$date_onset, na.rm = TRUE),
-        max = max(linelist$date_onset, na.rm = TRUE)
-      )
-    ),
-
-    mainPanel(
-      plotOutput(
-        outputId = "epicurve"
-      )
+  sidebar = sidebar(
+    dateRangeInput(
+      inputId = "date_range",
+      label = "Select Date Range:",
+      start = min(linelist$date_onset, na.rm = TRUE),
+      end = max(linelist$date_onset, na.rm = TRUE),
+      min = min(linelist$date_onset, na.rm = TRUE),
+      max = max(linelist$date_onset, na.rm = TRUE)
     )
+  ),
+  plotOutput(
+    outputId = "epicurve"
   )
 )
 

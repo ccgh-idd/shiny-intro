@@ -1,43 +1,48 @@
 library(shiny)
+library(bslib)
 library(tidyverse)
 
+# Load the cleaned measles outbreak data
 linelist <- readRDS("data/clean/moissala_data.rds")
 
-ui <- fluidPage(
-  titlePanel("Moissala measles Outbreak"),
+# UI: Define the app layout and appearance
+ui <- page_sidebar(
+  title = "Moissala measles Outbreak",
 
-  sidebarLayout(
-    sidebarPanel(
-      dateRangeInput(
-        "date_range",
-        "Select Date Range:",
-        start = min(linelist$date_onset, na.rm = TRUE),
-        end = max(linelist$date_onset, na.rm = TRUE),
-        min = min(linelist$date_onset, na.rm = TRUE),
-        max = max(linelist$date_onset, na.rm = TRUE)
-      ),
-
-      selectInput(
-        inputId = "time_unit",
-        label = "Time Unit:",
-        choices = c("Day", "Week", "Month", "Year"),
-        selected = "Day"
-      )
+  # Sidebar: Contains input controls for filtering and customizing
+  sidebar = sidebar(
+    # Date range filter for outbreak timeline
+    dateRangeInput(
+      "date_range",
+      "Select Date Range:",
+      start = min(linelist$date_onset, na.rm = TRUE),
+      end = max(linelist$date_onset, na.rm = TRUE),
+      min = min(linelist$date_onset, na.rm = TRUE),
+      max = max(linelist$date_onset, na.rm = TRUE)
     ),
 
-    mainPanel(
-      plotOutput("epicurve"),
-
-      tabsetPanel(
-        tabPanel("Age Pyramid", plotOutput("age_pyramid")),
-        tabPanel("Summary Statistics", tableOutput("summary_table"))
-      )
+    # Dropdown to select time aggregation unit
+    selectInput(
+      inputId = "time_unit",
+      label = "Time Unit:",
+      choices = c("Day", "Week", "Month", "Year"),
+      selected = "Day"
     )
+  ),
+
+  # Main content: Epicurve plot
+  plotOutput("epicurve"),
+
+  # Tabbed panels for additional analyses
+  navset_tab(
+    nav_panel("Age Pyramid", plotOutput("age_pyramid")),
+    nav_panel("Summary Statistics", tableOutput("summary_table"))
   )
 )
 
+# Server: Define the reactive logic and outputs
 server <- function(input, output, session) {
-  # here data are filtered
+  # Reactive: Filter data based on selected date range
   filtered_data <- reactive({
     linelist |>
       filter(
@@ -46,7 +51,7 @@ server <- function(input, output, session) {
       )
   })
 
-  # count the data
+  # Reactive: Aggregate cases by selected time unit
   plot_df <- reactive({
     filtered_data() |>
       mutate(
@@ -58,10 +63,12 @@ server <- function(input, output, session) {
       count(agg_date)
   })
 
-  # plot the epicurve
+  # Output: Render the epidemic curve
   output$epicurve <- renderPlot({
+    # Count valid dates for caption
     n_valid <- nrow(filtered_data() |> filter(!is.na(date_onset)))
 
+    # Create bar chart of cases over time
     plot_df() |>
       ggplot(aes(x = agg_date, y = n)) +
       geom_col(fill = "#E74C3C", color = "white", linewidth = 0.3) +
@@ -84,13 +91,14 @@ server <- function(input, output, session) {
       theme_minimal()
   })
 
-  # data for the age pyramid
+  # Reactive: Prepare data for age pyramid (remove missing values)
   pyramid_df <- reactive({
     filtered_data() |>
       filter(!is.na(age_group) & !is.na(sex)) |>
       mutate(sex = case_match(sex, "m" ~ "male", "f" ~ "female"))
   })
 
+  # Output: Render age pyramid visualization
   output$age_pyramid <- renderPlot({
     apyramid::age_pyramid(
       data = pyramid_df(),
@@ -99,6 +107,7 @@ server <- function(input, output, session) {
     )
   })
 
+  # Output: Render summary statistics table by age group
   output$summary_table <- renderTable({
     filtered_data() |>
       summarise(
@@ -118,5 +127,5 @@ server <- function(input, output, session) {
   })
 }
 
+# Run the application
 shinyApp(ui, server)
-?daterangeinput
