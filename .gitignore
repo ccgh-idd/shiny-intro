@@ -36,7 +36,6 @@ rsconnect/
 # knitr and R markdown
 *_cache/
 *_files/
-/*.html
 /*.pdf
 /*.docx
 
