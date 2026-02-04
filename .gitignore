@@ -11,10 +11,10 @@
 *.Rproj
 
 # macOS
+.DS_Store
 raw/.DS_Store
 data/.DS_Store
 
-*/.DS_Store
 .AppleDouble
 .LSOverride
 
