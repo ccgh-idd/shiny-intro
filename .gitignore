@@ -1,5 +1,4 @@
 # Quarto rendered outputs
-*.html
 *_files/
 /.quarto/
 
