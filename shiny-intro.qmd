@@ -62,7 +62,7 @@ If not done already, download and unzip the course folder. Save the uncompressed
 #| eval: true
 
 downloadthis::download_link(
-  link = 'https://github.com/ccgh-idd/shiny-intro/raw/52088f33c09c27302ad1e3ae0f477fbdce00811c/data/shiny-app-init',
+  link = 'https://github.com/ccgh-idd/shiny-intro/raw/52088f33c09c27302ad1e3ae0f477fbdce00811c/data/shiny-app-init.zip',
   button_label = ' Course Folder',
   has_icon = TRUE,
   icon = "fa fa-save",
